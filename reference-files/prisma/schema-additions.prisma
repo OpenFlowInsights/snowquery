@@ -1,0 +1,113 @@
+// prisma/schema-additions.prisma
+// ─── ADD THESE MODELS to your existing schema.prisma ───
+
+// Enriched metadata for a table — business context that helps Claude
+// generate accurate SQL from natural language
+model TableMetadata {
+  id          String   @id @default(cuid())
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  tableName   String   // Must match the Snowflake table name exactly
+
+  // ── Core Descriptions ──────────────────────────────────
+  displayName String?  // Human-friendly name, e.g. "Claims Detail"
+  description String?  // What this table represents in business terms
+  // e.g. "Line-level claims data for all members attributed to the ACO.
+  //        One row per claim line. Includes professional, facility, and pharmacy claims."
+
+  // ── Domain Context ─────────────────────────────────────
+  businessOwner  String?  // Who owns this data, e.g. "Finance Team"
+  dataSource     String?  // Where data comes from, e.g. "CMS CCLF files"
+  updateFrequency String? // How often refreshed, e.g. "Monthly"
+  grainDescription String? // What one row represents
+  // e.g. "One row = one claim line item for a single service on a single date"
+
+  // ── Query Hints ────────────────────────────────────────
+  commonFilters  String?  // Filters users typically apply, as JSON array
+  // e.g. '["WHERE claim_status = \'PAID\'", "WHERE service_date >= DATEADD(month, -12, CURRENT_DATE())"]'
+  commonJoins    String?  // How this table typically joins to others, as JSON array
+  // e.g. '[{"table": "MEMBER_DEMOGRAPHICS", "on": "MEMBER_ID = MEMBER_ID", "type": "LEFT JOIN"}]'
+  importantNotes String?  // Caveats, known issues, edge cases
+  // e.g. "Pharmacy claims have NULL provider_id. Use pharmacy_npi instead."
+  sampleQueries  String?  // Example NL→SQL pairs that work well, as JSON array
+  // e.g. '[{"question": "total cost by provider", "sql": "SELECT provider_name, SUM(paid_amount)..."}]'
+
+  columns     ColumnMetadata[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, tableName])
+  @@index([tenantId])
+}
+
+// Enriched metadata for a column
+model ColumnMetadata {
+  id            String   @id @default(cuid())
+
+  tableMetadataId String
+  tableMetadata   TableMetadata @relation(fields: [tableMetadataId], references: [id], onDelete: Cascade)
+
+  columnName    String   // Must match the Snowflake column name exactly
+
+  // ── Core Descriptions ──────────────────────────────────
+  displayName   String?  // Human-friendly, e.g. "Paid Amount"
+  description   String?  // What this column means in business terms
+  // e.g. "The amount actually paid by the payer after adjustments and denials.
+  //        Does not include member cost-sharing (copay, coinsurance, deductible)."
+
+  // ── Synonyms & Aliases ─────────────────────────────────
+  synonyms      String?  // Alternative names users might say, as JSON array
+  // e.g. '["cost", "payment", "reimbursement", "allowed amount"]'
+  // This is CRITICAL — users say "cost" but the column is PAID_AMOUNT
+
+  // ── Value Context ──────────────────────────────────────
+  sampleValues  String?  // Representative values, as JSON array
+  // e.g. '["PAID", "DENIED", "PENDING", "ADJUSTED"]'
+  valueMapping  String?  // What coded values mean, as JSON object
+  // e.g. '{"1": "Inpatient", "2": "Outpatient", "3": "Professional", "4": "Pharmacy"}'
+  unit          String?  // Unit of measure, e.g. "USD", "days", "kg"
+  format        String?  // Display format hint, e.g. "currency", "percentage", "date"
+
+  // ── Constraints & Logic ────────────────────────────────
+  isRequired    Boolean  @default(false)  // Should almost always be in SELECT
+  isPrimaryKey  Boolean  @default(false)
+  isForeignKey  Boolean  @default(false)
+  foreignKeyRef String?  // e.g. "PROVIDER_DIRECTORY.PROVIDER_ID"
+  computedLogic String?  // If derived, how to calculate
+  // e.g. "PAID_AMOUNT + MEMBER_RESPONSIBILITY = BILLED_AMOUNT"
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tableMetadataId, columnName])
+}
+
+// Business glossary — maps domain terms to tables/columns
+// e.g. "attributed lives" → MEMBER_DEMOGRAPHICS where ATTRIBUTION_STATUS = 'ATTRIBUTED'
+model BusinessTerm {
+  id          String   @id @default(cuid())
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  term        String   // The business term, e.g. "attributed lives"
+  definition  String?  // What it means
+  // e.g. "Members currently assigned to the ACO under the MSSP attribution methodology"
+  sqlMapping  String?  // How to express it in SQL
+  // e.g. "SELECT COUNT(DISTINCT MEMBER_ID) FROM MEMBER_DEMOGRAPHICS WHERE ATTRIBUTION_STATUS = 'ATTRIBUTED'"
+  relatedTables String? // Which tables are involved, as JSON array
+  // e.g. '["MEMBER_DEMOGRAPHICS"]'
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, term])
+  @@index([tenantId])
+}
+
+// ── Don't forget to add relations to the Tenant model: ───
+// tableMetadata  TableMetadata[]
+// businessTerms  BusinessTerm[]
