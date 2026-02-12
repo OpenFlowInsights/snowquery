@@ -3,14 +3,36 @@
 
 import snowflake from "snowflake-sdk";
 import { prisma } from "./prisma";
+import fs from "fs";
+import path from "path";
 
 // Connection pool: tenantId → connection
 const connectionPool = new Map<string, snowflake.Connection>();
 
+/**
+ * Get private key from file or environment variable
+ */
+function getPrivateKey(): string | undefined {
+  // Try reading from file first (for local/server builds)
+  const keyPath = path.join(process.cwd(), 'rsa_key.p8');
+
+  if (fs.existsSync(keyPath)) {
+    return fs.readFileSync(keyPath, 'utf8');
+  }
+
+  // Fall back to environment variable (for Vercel)
+  if (process.env.SNOWFLAKE_PRIVATE_KEY) {
+    return process.env.SNOWFLAKE_PRIVATE_KEY.replace(/\\n/g, '\n');
+  }
+
+  return undefined;
+}
+
 interface TenantConfig {
   sfAccount: string;
   sfUser: string;
-  sfPassword: string;
+  sfPassword?: string;
+  sfPrivateKey?: string;
   sfWarehouse: string;
   sfDatabase: string;
   sfSchema: string;
@@ -30,15 +52,28 @@ function getConnection(tenantId: string, config: TenantConfig): Promise<snowflak
       return resolve(existing);
     }
 
-    const conn = snowflake.createConnection({
+    // Support both password and JWT authentication
+    const connectionConfig: any = {
       account: config.sfAccount,
       username: config.sfUser,
-      password: config.sfPassword,
       warehouse: config.sfWarehouse,
       database: config.sfDatabase,
       schema: config.sfSchema,
       role: config.sfRole,
-    });
+    };
+
+    if (config.sfPrivateKey) {
+      // JWT authentication
+      connectionConfig.authenticator = 'SNOWFLAKE_JWT';
+      connectionConfig.privateKey = config.sfPrivateKey;
+    } else if (config.sfPassword) {
+      // Password authentication
+      connectionConfig.password = config.sfPassword;
+    } else {
+      return reject(new Error('Either sfPassword or sfPrivateKey must be provided'));
+    }
+
+    const conn = snowflake.createConnection(connectionConfig);
 
     conn.connect((err) => {
       if (err) {
@@ -64,16 +99,18 @@ async function getTenantConfig(tenantId: string): Promise<TenantConfig | null> {
   // Fallback to environment variables for public access
   if (
     process.env.SNOWFLAKE_ACCOUNT &&
-    process.env.SNOWFLAKE_USER &&
-    process.env.SNOWFLAKE_PASSWORD &&
+    (process.env.SNOWFLAKE_USER || process.env.SNOWFLAKE_USERNAME) &&
     process.env.SNOWFLAKE_WAREHOUSE &&
     process.env.SNOWFLAKE_DATABASE &&
     process.env.SNOWFLAKE_SCHEMA
   ) {
+    const privateKey = getPrivateKey();
+
     return {
       sfAccount: process.env.SNOWFLAKE_ACCOUNT,
-      sfUser: process.env.SNOWFLAKE_USER,
+      sfUser: process.env.SNOWFLAKE_USER || process.env.SNOWFLAKE_USERNAME || "",
       sfPassword: process.env.SNOWFLAKE_PASSWORD,
+      sfPrivateKey: privateKey,
       sfWarehouse: process.env.SNOWFLAKE_WAREHOUSE,
       sfDatabase: process.env.SNOWFLAKE_DATABASE,
       sfSchema: process.env.SNOWFLAKE_SCHEMA,
