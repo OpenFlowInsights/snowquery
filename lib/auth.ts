@@ -145,26 +145,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 });
 
-// Type augmentation for session and JWT
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      image?: string;
-      role: "OWNER" | "ADMIN" | "ANALYST" | "VIEWER";
-      tenantId: string | null;
-      tenant: { id: string; name: string; slug: string } | null;
-    };
-  }
-}
+// Type augmentation for session and JWT - commented out (auth disabled)
+// declare module "next-auth" {
+//   interface Session {
+//     user: {
+//       id: string;
+//       name: string;
+//       email: string;
+//       image?: string;
+//       role: "OWNER" | "ADMIN" | "ANALYST" | "VIEWER";
+//       tenantId: string | null;
+//       tenant: { id: string; name: string; slug: string } | null;
+//     };
+//   }
+// }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    id?: string;
-    role?: "OWNER" | "ADMIN" | "ANALYST" | "VIEWER";
-    tenantId?: string | null;
-    tenant?: { id: string; name: string; slug: string } | null;
-  }
-}
+// Authentication disabled - type augmentations commented out
+// declare module "next-auth/jwt" {
+//   interface JWT {
+//     id?: string;
+//     role?: "OWNER" | "ADMIN" | "ANALYST" | "VIEWER";
+//     tenantId?: string | null;
+//     tenant?: { id: string; name: string; slug: string } | null;
+//   }
+// }
