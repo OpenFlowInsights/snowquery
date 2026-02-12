@@ -36,7 +36,7 @@ export async function GET() {
   });
 
   // Strip passwords from response
-  const safe = tenants.map(({ sfPassword, schemaCache, ...t }) => ({
+  const safe = tenants.map(({ sfPassword, schemaCache, ...t }: any) => ({
     ...t,
     hasSchemaCache: !!schemaCache,
   }));

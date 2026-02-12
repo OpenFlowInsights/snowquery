@@ -16,7 +16,7 @@ export default async function AdminPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  const safeTenants = tenants.map(({ sfPassword, schemaCache, ...t }) => ({
+  const safeTenants = tenants.map(({ sfPassword, schemaCache, ...t }: any) => ({
     ...t,
     hasSchemaCache: !!schemaCache,
   }));
