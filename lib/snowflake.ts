@@ -9,6 +9,10 @@ import path from "path";
 // Connection pool: tenantId → connection
 const connectionPool = new Map<string, snowflake.Connection>();
 
+// In-memory schema cache for public mode
+const schemaCache = new Map<string, { data: any[], timestamp: number }>();
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
 /**
  * Get private key from file or environment variable
  */
@@ -227,11 +231,12 @@ export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
       });
     });
 
-    for (const table of tables) {
+    // Fetch all columns in parallel for better performance
+    const columnPromises = tables.map(table => {
       const tableName = table.TABLE_NAME;
       const tableSchema = table.TABLE_SCHEMA;
 
-      const columns: any[] = await new Promise((resolve, reject) => {
+      return new Promise<any>((resolve, reject) => {
         conn.execute({
           sqlText: `
             SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COMMENT
@@ -241,17 +246,23 @@ export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
           `,
           complete: (err, _, rows) => {
             if (err) return reject(err);
-            resolve(rows || []);
+            resolve({
+              table,
+              columns: rows || []
+            });
           },
         });
       });
+    });
 
-      // Use approximate row count from INFORMATION_SCHEMA (much faster than COUNT(*))
+    const results = await Promise.all(columnPromises);
+
+    for (const { table, columns } of results) {
       const rowCount = table.ROW_COUNT || 0;
 
       tableMetadata.push({
-        name: tableName,
-        schema: tableSchema, // Include schema name
+        name: table.TABLE_NAME,
+        schema: table.TABLE_SCHEMA,
         type: table.TABLE_TYPE,
         comment: table.COMMENT || "",
         row_count: rowCount,
@@ -280,16 +291,26 @@ export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
 }
 
 /**
- * Get cached schema or refresh if stale (>1 hour)
+ * Get cached schema or refresh if stale
  */
 export async function getSchemaContext(tenantId: string): Promise<any[]> {
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } }).catch(() => null);
 
-  // If no tenant record (public access), always refresh
+  // Check in-memory cache first (for public mode)
   if (!tenant) {
-    return await refreshSchemaCache(tenantId);
+    const cached = schemaCache.get(tenantId);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log("Using in-memory schema cache");
+      return cached.data;
+    }
+
+    console.log("Refreshing schema cache...");
+    const data = await refreshSchemaCache(tenantId);
+    schemaCache.set(tenantId, { data, timestamp: Date.now() });
+    return data;
   }
 
+  // Use database cache for tenants
   const ONE_HOUR = 60 * 60 * 1000;
   const isStale =
     !tenant.schemaCache ||
