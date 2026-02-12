@@ -36,6 +36,7 @@ interface TenantConfig {
   sfWarehouse: string;
   sfDatabase: string;
   sfSchema: string;
+  sfSchemas?: string[]; // Support multiple schemas
   sfRole: string;
   maxRowsPerQuery: number;
   queryTimeoutSecs: number;
@@ -106,6 +107,10 @@ async function getTenantConfig(tenantId: string): Promise<TenantConfig | null> {
   ) {
     const privateKey = getPrivateKey();
 
+    // Parse schemas - support comma-separated list
+    const schemaEnv = process.env.SNOWFLAKE_SCHEMA || "";
+    const schemas = schemaEnv.split(',').map(s => s.trim()).filter(s => s);
+
     return {
       sfAccount: process.env.SNOWFLAKE_ACCOUNT,
       sfUser: process.env.SNOWFLAKE_USER || process.env.SNOWFLAKE_USERNAME || "",
@@ -113,7 +118,8 @@ async function getTenantConfig(tenantId: string): Promise<TenantConfig | null> {
       sfPrivateKey: privateKey,
       sfWarehouse: process.env.SNOWFLAKE_WAREHOUSE,
       sfDatabase: process.env.SNOWFLAKE_DATABASE,
-      sfSchema: process.env.SNOWFLAKE_SCHEMA,
+      sfSchema: schemas[0], // Default schema
+      sfSchemas: schemas, // All schemas
       sfRole: process.env.SNOWFLAKE_ROLE || "PUBLIC",
       maxRowsPerQuery: parseInt(process.env.MAX_ROWS_PER_QUERY || "1000"),
       queryTimeoutSecs: parseInt(process.env.QUERY_TIMEOUT_SECS || "60"),
@@ -200,33 +206,19 @@ export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } }).catch(() => null);
   const conn = await getConnection(tenantId, config);
 
-  const tables: any[] = await new Promise((resolve, reject) => {
-    conn.execute({
-      sqlText: `
-        SELECT TABLE_NAME, TABLE_TYPE, COMMENT
-        FROM ${config.sfDatabase}.INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_SCHEMA = '${config.sfSchema}'
-        ORDER BY TABLE_NAME
-      `,
-      complete: (err, _, rows) => {
-        if (err) return reject(err);
-        resolve(rows || []);
-      },
-    });
-  });
+  // Get all schemas to introspect
+  const schemasToQuery = config.sfSchemas || [config.sfSchema];
+  const tableMetadata: any[] = [];
 
-  const tableMetadata = [];
-
-  for (const table of tables) {
-    const tableName = table.TABLE_NAME;
-
-    const columns: any[] = await new Promise((resolve, reject) => {
+  // Introspect each schema
+  for (const schemaName of schemasToQuery) {
+    const tables: any[] = await new Promise((resolve, reject) => {
       conn.execute({
         sqlText: `
-          SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COMMENT
-          FROM ${config.sfDatabase}.INFORMATION_SCHEMA.COLUMNS
-          WHERE TABLE_SCHEMA = '${config.sfSchema}' AND TABLE_NAME = '${tableName}'
-          ORDER BY ORDINAL_POSITION
+          SELECT TABLE_NAME, TABLE_TYPE, COMMENT, TABLE_SCHEMA
+          FROM ${config.sfDatabase}.INFORMATION_SCHEMA.TABLES
+          WHERE TABLE_SCHEMA = '${schemaName}'
+          ORDER BY TABLE_NAME
         `,
         complete: (err, _, rows) => {
           if (err) return reject(err);
@@ -235,28 +227,49 @@ export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
       });
     });
 
-    const rowCount: number = await new Promise((resolve, reject) => {
-      conn.execute({
-        sqlText: `SELECT COUNT(*) AS CNT FROM ${config.sfDatabase}.${config.sfSchema}."${tableName}"`,
-        complete: (err, _, rows) => {
-          if (err) return resolve(0);
-          resolve(rows?.[0]?.CNT || 0);
-        },
-      });
-    });
+    for (const table of tables) {
+      const tableName = table.TABLE_NAME;
+      const tableSchema = table.TABLE_SCHEMA;
 
-    tableMetadata.push({
-      name: tableName,
-      type: table.TABLE_TYPE,
-      comment: table.COMMENT || "",
-      row_count: rowCount,
-      columns: columns.map((c: any) => ({
-        name: c.COLUMN_NAME,
-        type: c.DATA_TYPE,
-        nullable: c.IS_NULLABLE === "YES",
-        comment: c.COMMENT || "",
-      })),
-    });
+      const columns: any[] = await new Promise((resolve, reject) => {
+        conn.execute({
+          sqlText: `
+            SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COMMENT
+            FROM ${config.sfDatabase}.INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = '${tableSchema}' AND TABLE_NAME = '${tableName}'
+            ORDER BY ORDINAL_POSITION
+          `,
+          complete: (err, _, rows) => {
+            if (err) return reject(err);
+            resolve(rows || []);
+          },
+        });
+      });
+
+      const rowCount: number = await new Promise((resolve, reject) => {
+        conn.execute({
+          sqlText: `SELECT COUNT(*) AS CNT FROM ${config.sfDatabase}.${tableSchema}."${tableName}"`,
+          complete: (err, _, rows) => {
+            if (err) return resolve(0);
+            resolve(rows?.[0]?.CNT || 0);
+          },
+        });
+      });
+
+      tableMetadata.push({
+        name: tableName,
+        schema: tableSchema, // Include schema name
+        type: table.TABLE_TYPE,
+        comment: table.COMMENT || "",
+        row_count: rowCount,
+        columns: columns.map((c: any) => ({
+          name: c.COLUMN_NAME,
+          type: c.DATA_TYPE,
+          nullable: c.IS_NULLABLE === "YES",
+          comment: c.COMMENT || "",
+        })),
+      });
+    }
   }
 
   // Cache in database (skip if no tenant record)
@@ -305,17 +318,32 @@ export function formatSchemaForPrompt(
   database: string,
   schema: string
 ): string {
-  const lines = [`Database: ${database}`, `Schema: ${schema}`, "", "Available tables:", ""];
+  const lines = [`Database: ${database}`, "", "Available tables:", ""];
 
+  // Group tables by schema
+  const tablesBySchema = new Map<string, any[]>();
   for (const table of tables) {
-    lines.push(`### ${table.name} (${table.type}, ~${table.row_count.toLocaleString()} rows)`);
-    if (table.comment) lines.push(`  Description: ${table.comment}`);
-    for (const col of table.columns) {
-      const nullable = col.nullable ? "NULL" : "NOT NULL";
-      const desc = col.comment ? ` -- ${col.comment}` : "";
-      lines.push(`  - ${col.name} (${col.type}, ${nullable})${desc}`);
+    const tableSchema = table.schema || schema;
+    if (!tablesBySchema.has(tableSchema)) {
+      tablesBySchema.set(tableSchema, []);
     }
-    lines.push("");
+    tablesBySchema.get(tableSchema)!.push(table);
+  }
+
+  // Format each schema's tables
+  for (const [schemaName, schemaTables] of tablesBySchema) {
+    lines.push(`## Schema: ${schemaName}`, "");
+    for (const table of schemaTables) {
+      const tablePath = table.schema ? `${table.schema}.${table.name}` : table.name;
+      lines.push(`### ${tablePath} (${table.type}, ~${table.row_count.toLocaleString()} rows)`);
+      if (table.comment) lines.push(`  Description: ${table.comment}`);
+      for (const col of table.columns) {
+        const nullable = col.nullable ? "NULL" : "NOT NULL";
+        const desc = col.comment ? ` -- ${col.comment}` : "";
+        lines.push(`  - ${col.name} (${col.type}, ${nullable})${desc}`);
+      }
+      lines.push("");
+    }
   }
 
   return lines.join("\n");
