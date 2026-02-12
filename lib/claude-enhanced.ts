@@ -69,21 +69,27 @@ function extractJson(text: string): NlToSqlResult | null {
  * This is the key to getting Claude to generate accurate SQL.
  */
 export async function buildEnrichedContext(tenantId: string): Promise<string> {
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
-  if (!tenant) throw new Error("Tenant not found");
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } }).catch(() => null);
 
-  // Get raw schema from Snowflake cache
-  const rawSchema = tenant.schemaCache ? JSON.parse(tenant.schemaCache) : [];
+  // Get raw schema from Snowflake cache or direct query
+  let rawSchema: any[] = [];
+  if (tenant && tenant.schemaCache) {
+    rawSchema = JSON.parse(tenant.schemaCache);
+  } else {
+    // Public mode - get schema from Snowflake directly
+    const { getSchemaContext } = await import("./snowflake");
+    rawSchema = await getSchemaContext(tenantId);
+  }
 
-  // Get enriched metadata
-  const tableMetadata = await prisma.tableMetadata.findMany({
+  // Get enriched metadata (skip if no tenant)
+  const tableMetadata = tenant ? await prisma.tableMetadata.findMany({
     where: { tenantId },
     include: { columns: true },
-  });
+  }).catch(() => []) : [];
 
-  const businessTerms = await prisma.businessTerm.findMany({
+  const businessTerms = tenant ? await prisma.businessTerm.findMany({
     where: { tenantId },
-  });
+  }).catch(() => []) : [];
 
   // Build a metadata lookup
   const metaByTable = new Map<string, any>();
@@ -96,9 +102,12 @@ export async function buildEnrichedContext(tenantId: string): Promise<string> {
   }
 
   // ── Assemble the context ────────────────────────────────────────────────
+  const database = tenant?.sfDatabase || process.env.SNOWFLAKE_DATABASE || "DEV_DB";
+  const schema = tenant?.sfSchema || process.env.SNOWFLAKE_SCHEMA?.split(',')[0] || "PUBLIC";
+
   const lines: string[] = [
-    `Database: ${tenant.sfDatabase}`,
-    `Schema: ${tenant.sfSchema}`,
+    `Database: ${database}`,
+    `Schema: ${schema}`,
     "",
   ];
 
@@ -292,16 +301,20 @@ export async function enhancedNlToSql(
   tenantId: string,
   conversationHistory: any[] = [],
 ): Promise<NlToSqlResult> {
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
-  if (!tenant) throw new Error("Tenant not found");
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } }).catch(() => null);
 
   const enrichedContext = await buildEnrichedContext(tenantId);
 
+  // Use tenant values or fall back to environment variables
+  const database = tenant?.sfDatabase || process.env.SNOWFLAKE_DATABASE || "DEV_DB";
+  const schema = tenant?.sfSchema || process.env.SNOWFLAKE_SCHEMA?.split(',')[0] || "PUBLIC";
+  const maxRows = tenant?.maxRowsPerQuery || parseInt(process.env.MAX_ROWS_PER_QUERY || "1000");
+
   const system = buildSystemPrompt(
     enrichedContext,
-    tenant.sfDatabase,
-    tenant.sfSchema,
-    tenant.maxRowsPerQuery,
+    database,
+    schema,
+    maxRows,
   );
 
   // Build conversation history for Claude
