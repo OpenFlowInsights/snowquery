@@ -3,24 +3,9 @@ import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient | null };
 
-// Create a safe Prisma client that won't crash if DB doesn't exist
-let prismaInstance: PrismaClient | null = null;
-
-try {
-  prismaInstance = globalForPrisma.prisma || new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["query"] : [],
-  });
-
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = prismaInstance;
-  }
-} catch (error) {
-  console.warn("Prisma initialization failed - running in public mode without database");
-  prismaInstance = null;
-}
-
-// Export a proxy that returns null queries if Prisma is unavailable
-export const prisma = prismaInstance || createMockPrisma();
+// Check if we're in public mode (no database needed)
+const isPublicMode = !process.env.DATABASE_URL ||
+                     process.env.DATABASE_URL.includes("file:./dev.db");
 
 function createMockPrisma(): any {
   const mockQuery = {
@@ -30,12 +15,38 @@ function createMockPrisma(): any {
     update: async () => { throw new Error("Database not available in public mode"); },
     delete: async () => { throw new Error("Database not available in public mode"); },
     count: async () => 0,
+    upsert: async () => { throw new Error("Database not available in public mode"); },
   };
 
   return {
     tenant: mockQuery,
     user: mockQuery,
     queryLog: mockQuery,
+    $connect: async () => {},
     $disconnect: async () => {},
+    $on: () => {},
   };
 }
+
+// Only initialize real Prisma if we have a proper database URL
+let prismaInstance: PrismaClient | any = null;
+
+if (isPublicMode) {
+  console.log("Running in public mode - database disabled");
+  prismaInstance = createMockPrisma();
+} else {
+  try {
+    prismaInstance = globalForPrisma.prisma || new PrismaClient({
+      log: process.env.NODE_ENV === "development" ? ["query"] : [],
+    });
+
+    if (process.env.NODE_ENV !== "production") {
+      globalForPrisma.prisma = prismaInstance;
+    }
+  } catch (error) {
+    console.warn("Prisma initialization failed - falling back to mock");
+    prismaInstance = createMockPrisma();
+  }
+}
+
+export const prisma = prismaInstance;
