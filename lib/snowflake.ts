@@ -215,7 +215,7 @@ export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
     const tables: any[] = await new Promise((resolve, reject) => {
       conn.execute({
         sqlText: `
-          SELECT TABLE_NAME, TABLE_TYPE, COMMENT, TABLE_SCHEMA
+          SELECT TABLE_NAME, TABLE_TYPE, COMMENT, TABLE_SCHEMA, ROW_COUNT
           FROM ${config.sfDatabase}.INFORMATION_SCHEMA.TABLES
           WHERE TABLE_SCHEMA = '${schemaName}'
           ORDER BY TABLE_NAME
@@ -246,15 +246,8 @@ export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
         });
       });
 
-      const rowCount: number = await new Promise((resolve, reject) => {
-        conn.execute({
-          sqlText: `SELECT COUNT(*) AS CNT FROM ${config.sfDatabase}.${tableSchema}."${tableName}"`,
-          complete: (err, _, rows) => {
-            if (err) return resolve(0);
-            resolve(rows?.[0]?.CNT || 0);
-          },
-        });
-      });
+      // Use approximate row count from INFORMATION_SCHEMA (much faster than COUNT(*))
+      const rowCount = table.ROW_COUNT || 0;
 
       tableMetadata.push({
         name: tableName,
