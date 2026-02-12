@@ -1,0 +1,1281 @@
+{
+  "schemas": [
+    "STAGING_marts"
+  ],
+  "database": "DEV_DB",
+  "tables": [
+    {
+      "name": "MART_CLAIMS_PA_OPPORTUNITY",
+      "schema": "STAGING_MARTS",
+      "type": "TRANSIENT",
+      "comment": "",
+      "row_count": 2894,
+      "columns": [
+        {
+          "name": "RXCUI",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "DRUG_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NDC_NORMALIZED",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "BRAND_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "THERAPEUTIC_CLASS_GTC",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "THERAPEUTIC_CLASS_ETC",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PHARMACY_CLASS",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CLAIM_COUNT",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_PAID",
+          "type": "NUMBER(30,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_PRESCRIPTION_COST",
+          "type": "NUMBER(30,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "AVG_COST_PER_CLAIM",
+          "type": "NUMBER(36,8)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_DAYS_SUPPLY",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_UNITS",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "UNIQUE_PRESCRIBERS",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_MAPD_PLANS_REQUIRING_PA",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_PLANS_WITH_ANY_UM",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PA_BURDEN_CATEGORY",
+          "type": "VARCHAR(27)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NATIONAL_MOST_COMMON_TIER",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NATIONAL_AVG_TIER",
+          "type": "NUMBER(38,6)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NATIONAL_PLANS_OFFERING",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PA_OPPORTUNITY_TIER",
+          "type": "VARCHAR(6)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "HAS_HIGH_NATIONAL_PA_REQUIREMENT",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "HIGH_OPPORTUNITY_EXPOSURE",
+          "type": "NUMBER(30,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "RANK_WITHIN_TIER",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "OVERALL_RANK",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PORTFOLIO_HIGH_OPPORTUNITY_EXPOSURE",
+          "type": "NUMBER(38,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PORTFOLIO_MEDIUM_OPPORTUNITY_EXPOSURE",
+          "type": "NUMBER(38,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PORTFOLIO_LOW_OPPORTUNITY_EXPOSURE",
+          "type": "NUMBER(38,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PORTFOLIO_TOTAL_PAID",
+          "type": "NUMBER(38,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_OF_PORTFOLIO_SPEND",
+          "type": "NUMBER(38,2)",
+          "nullable": true,
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "MART_CLAIMS_VS_NATIONAL_SPENDING",
+      "schema": "STAGING_MARTS",
+      "type": "TRANSIENT",
+      "comment": "",
+      "row_count": 674083,
+      "columns": [
+        {
+          "name": "DRUG_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "BRAND_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "RXCUI",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NDC_NORMALIZED",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "THERAPEUTIC_CLASS_GTC",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "THERAPEUTIC_CLASS_ETC",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CLIENT_TOTAL_CLAIMS",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CLIENT_TOTAL_PAID",
+          "type": "NUMBER(30,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CLIENT_TOTAL_PRESCRIPTION_COST",
+          "type": "NUMBER(30,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CLIENT_TOTAL_UNITS",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CLIENT_TOTAL_DAYS_SUPPLY",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CLIENT_AVG_COST_PER_CLAIM",
+          "type": "NUMBER(36,8)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CLIENT_COST_PER_UNIT",
+          "type": "NUMBER(37,4)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NATIONAL_TOTAL_SPENDING_2023",
+          "type": "NUMBER(18,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NATIONAL_TOTAL_CLAIMS_2023",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NATIONAL_TOTAL_BENEFICIARIES_2023",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NATIONAL_AVG_COST_PER_BENEFICIARY",
+          "type": "NUMBER(10,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NATIONAL_COST_PER_CLAIM",
+          "type": "NUMBER(25,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "SPENDING_CATEGORY",
+          "type": "VARCHAR(25)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "COST_TREND_CATEGORY",
+          "type": "VARCHAR(25)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_CHANGE_COST_PER_UNIT_YOY",
+          "type": "NUMBER(10,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CLIENT_COST_ABOVE_NATIONAL",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_VARIANCE_VS_NATIONAL",
+          "type": "NUMBER(38,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NATIONAL_TREND_DIRECTION",
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "RANK_BY_COST_VARIANCE",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "RANK_BY_CLIENT_SPEND",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "MART_DRUG_UM_COMPARISON",
+      "schema": "STAGING_MARTS",
+      "type": "TRANSIENT",
+      "comment": "",
+      "row_count": 5440,
+      "columns": [
+        {
+          "name": "RXCUI",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "DRUG_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLANS_OFFERING_DRUG",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLANS_REQUIRING_PA",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_PLANS_WITH_PA",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLANS_REQUIRING_ST",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_PLANS_WITH_ST",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLANS_WITH_QL",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_PLANS_WITH_QL",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLANS_WITH_ANY_UM",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_PLANS_WITH_ANY_UM",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "AVG_TIER",
+          "type": "NUMBER(38,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "BEST_TIER",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "WORST_TIER",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TIER_RANGE",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "AVG_RESTRICTIVENESS_SCORE",
+          "type": "NUMBER(22,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "MIN_RESTRICTIVENESS_SCORE",
+          "type": "NUMBER(3,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "MAX_RESTRICTIVENESS_SCORE",
+          "type": "NUMBER(3,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "STDDEV_RESTRICTIVENESS",
+          "type": "FLOAT",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "STATES_AVAILABLE",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "MA_HMO_PLANS",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "MA_PPO_PLANS",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PDP_PLANS",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "OVERALL_RESTRICTION_CATEGORY",
+          "type": "VARCHAR(21)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TIER_VARIABILITY_CATEGORY",
+          "type": "VARCHAR(25)",
+          "nullable": true,
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "MART_FORMULARY_BY_NDC",
+      "schema": "STAGING_MARTS",
+      "type": "TRANSIENT",
+      "comment": "",
+      "row_count": 322051523,
+      "columns": [
+        {
+          "name": "PLAN_NDC_RXCUI_KEY",
+          "type": "VARCHAR(32)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NDC_NORMALIZED",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NDC_LABELER_CODE",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "NDC_PRODUCT_CODE",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "RXCUI",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "DRUG_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TERM_TYPE",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CONTRACT_PLAN_ID",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CONTRACT_ID",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLAN_ID",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "SEGMENT_ID",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "FORMULARY_ID",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLAN_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLAN_CATEGORY",
+          "type": "VARCHAR(8)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "IS_MAPD",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "IS_PDP",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "STATE",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TIER_LEVEL",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TIER_DESCRIPTION",
+          "type": "VARCHAR(18)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "HAS_QUANTITY_LIMIT",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "QUANTITY_LIMIT_AMOUNT",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "QUANTITY_LIMIT_DAYS",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "REQUIRES_PRIOR_AUTH",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "REQUIRES_STEP_THERAPY",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "IS_SELECTED_DRUG",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "HAS_ANY_UM",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "COPAY_PREFERRED_30DAY",
+          "type": "NUMBER(10,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "COPAY_NONPREFERRED_30DAY",
+          "type": "NUMBER(10,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "COST_TYPE_PREFERRED",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "DEDUCTIBLE_APPLIES",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "SOURCE_VINTAGE",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "MART_PARTD_SPENDING_ANALYSIS",
+      "schema": "STAGING_MARTS",
+      "type": "TRANSIENT",
+      "comment": "",
+      "row_count": 100962,
+      "columns": [
+        {
+          "name": "DRUG_KEY",
+          "type": "VARCHAR(32)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "BRAND_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "GENERIC_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "MANUFACTURER_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "MANUFACTURER_COUNT",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_SPENDING_2023",
+          "type": "NUMBER(18,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_DOSAGE_UNITS_2023",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_CLAIMS_2023",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_BENEFICIARIES_2023",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "AVG_COST_PER_UNIT_2023",
+          "type": "NUMBER(10,4)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "AVG_COST_PER_CLAIM_2023",
+          "type": "NUMBER(10,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "AVG_COST_PER_BENEFICIARY_2023",
+          "type": "NUMBER(10,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_SPENDING_2022",
+          "type": "NUMBER(18,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_BENEFICIARIES_2022",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "AVG_COST_PER_UNIT_2022",
+          "type": "NUMBER(10,4)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_CHANGE_COST_PER_UNIT_2022_2023",
+          "type": "NUMBER(10,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CAGR_COST_PER_UNIT_2019_2023",
+          "type": "NUMBER(10,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "QUARTERS_REPORTED",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_SPENDING_ALL_QUARTERS",
+          "type": "NUMBER(30,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_BENEFICIARIES_ALL_QUARTERS",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "AVG_SPENDING_PER_BENE_QUARTERLY",
+          "type": "NUMBER(28,8)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "SPENDING_PER_BENEFICIARY_CALCULATED",
+          "type": "NUMBER(24,8)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "SPENDING_PER_UNIT_CALCULATED",
+          "type": "NUMBER(24,8)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "SPENDING_RANK_2023",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "BENEFICIARY_RANK_2023",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "COST_INCREASE_RANK",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "SPENDING_PERCENTILE",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "UNIT_COST_PERCENTILE",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "SPENDING_CATEGORY",
+          "type": "VARCHAR(25)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "COST_TREND_CATEGORY",
+          "type": "VARCHAR(25)",
+          "nullable": true,
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "MART_PLAN_PA_BURDEN",
+      "schema": "STAGING_MARTS",
+      "type": "TRANSIENT",
+      "comment": "",
+      "row_count": 5510,
+      "columns": [
+        {
+          "name": "CONTRACT_PLAN_ID",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "CONTRACT_ID",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLAN_ID",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLAN_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLAN_CATEGORY",
+          "type": "VARCHAR(8)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "IS_MAPD",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "IS_PDP",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "STATE",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "FORMULARY_ID",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_DRUGS_ON_FORMULARY",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "DRUGS_WITH_PA",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "DRUGS_WITH_ST",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "DRUGS_WITH_QL",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "DRUGS_WITH_ANY_UM",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_DRUGS_WITH_PA",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_DRUGS_WITH_ST",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_DRUGS_WITH_QL",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_DRUGS_WITH_ANY_UM",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "AVG_TIER_PLACEMENT",
+          "type": "NUMBER(38,6)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "OVERALL_RESTRICTIVENESS_SCORE",
+          "type": "NUMBER(28,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "RESTRICTIVENESS_RANK_IN_CATEGORY",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PA_PERCENTILE",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "UM_PERCENTILE",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PA_DECILE",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "MART_PRESCRIBER_PA_SUMMARY",
+      "schema": "STAGING_MARTS",
+      "type": "TRANSIENT",
+      "comment": "",
+      "row_count": 2464,
+      "columns": [
+        {
+          "name": "PRESCRIBER_NPI",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PRESCRIBER_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PROVIDER_GROUPING",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_CLAIMS",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_PAID",
+          "type": "NUMBER(30,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_PRESCRIPTION_COST",
+          "type": "NUMBER(30,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "UNIQUE_DRUGS_PRESCRIBED",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "HIGH_PA_OPPORTUNITY_SPEND",
+          "type": "NUMBER(30,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "MEDIUM_PA_OPPORTUNITY_SPEND",
+          "type": "NUMBER(30,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "HIGH_PA_OPPORTUNITY_CLAIMS",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_CLAIMS_HIGH_PA_OPPORTUNITY",
+          "type": "NUMBER(28,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOP_DRUG_1",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOP_DRUG_2",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOP_DRUG_3",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOP_DRUG_4",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOP_DRUG_5",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "RANK_BY_PA_OPPORTUNITY_EXPOSURE",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "RANK_BY_TOTAL_SPEND",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "MART_PRIOR_AUTH_SUMMARY",
+      "schema": "STAGING_MARTS",
+      "type": "TRANSIENT",
+      "comment": "",
+      "row_count": 5994,
+      "columns": [
+        {
+          "name": "RXCUI",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "DRUG_NAME",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TERM_TYPE",
+          "type": "VARCHAR(16777216)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "TOTAL_PLANS",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLANS_WITH_PA",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLANS_WITH_ST",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLANS_WITH_QL",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PLANS_WITH_ANY_UM",
+          "type": "NUMBER(13,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_PLANS_WITH_PA",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_PLANS_WITH_ST",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PCT_PLANS_WITH_ANY_UM",
+          "type": "NUMBER(23,2)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "AVG_TIER",
+          "type": "NUMBER(38,6)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "MOST_COMMON_TIER",
+          "type": "NUMBER(38,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "STATES_COVERED",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PA_BURDEN_CATEGORY",
+          "type": "VARCHAR(27)",
+          "nullable": true,
+          "comment": ""
+        },
+        {
+          "name": "PA_PERCENTILE",
+          "type": "NUMBER(18,0)",
+          "nullable": true,
+          "comment": ""
+        }
+      ]
+    }
+  ],
+  "generated_at": "2026-02-12T05:24:06.957Z"
+}
