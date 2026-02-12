@@ -1,15 +1,15 @@
 // app/api/query/route.ts
+// Authentication disabled - using default tenant for public access
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/api-auth";
 import { enhancedNlToSql } from "@/lib/claude-enhanced";
 import { executeQuery } from "@/lib/snowflake";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
-  const authResult = await requireAuth("ANALYST");
-  if (!authResult.authorized) return authResult.response;
+  // Use default tenant for public access
+  const tenantId = process.env.DEFAULT_TENANT_ID || "default";
+  const user = { id: "guest", name: "Guest User", email: "guest@snowquery.com" };
 
-  const { user, tenantId } = authResult;
   const start = Date.now();
 
   try {
@@ -31,39 +31,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Rate limiting: check daily query count
-    const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
-    if (!tenant) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
+    // Rate limiting: check daily query count (skip for public access)
+    const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } }).catch(() => null);
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    if (tenant) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
 
-    const todayQueries = await prisma.queryLog.count({
-      where: { tenantId, createdAt: { gte: todayStart } },
-    });
+      const todayQueries = await prisma.queryLog.count({
+        where: { tenantId, createdAt: { gte: todayStart } },
+      });
 
-    if (todayQueries >= tenant.dailyQueryLimit) {
-      return NextResponse.json(
-        { error: `Daily query limit reached (${tenant.dailyQueryLimit}). Resets at midnight.` },
-        { status: 429 }
-      );
+      if (todayQueries >= tenant.dailyQueryLimit) {
+        return NextResponse.json(
+          { error: `Daily query limit reached (${tenant.dailyQueryLimit}). Resets at midnight.` },
+          { status: 429 }
+        );
+      }
     }
 
     // Step 1: NL → SQL via Claude (enhanced with metadata + conversation context)
     const nlResult = await enhancedNlToSql(question, tenantId, conversationHistory);
 
     if (nlResult.error || !nlResult.sql) {
-      // Log failed translation
-      await prisma.queryLog.create({
-        data: {
-          tenantId,
-          userId: user.id,
-          question,
-          error: nlResult.error || "No SQL generated",
-        },
-      });
+      // Log failed translation (skip if no tenant)
+      if (tenant) {
+        await prisma.queryLog.create({
+          data: {
+            tenantId,
+            userId: user.id,
+            question,
+            error: nlResult.error || "No SQL generated",
+          },
+        }).catch(() => {});
+      }
 
       return NextResponse.json({
         question,
@@ -96,18 +97,20 @@ export async function POST(req: NextRequest) {
       const result = await executeQuery(tenantId, nlResult.sql);
       const elapsed = Date.now() - start;
 
-      // Log successful query
-      await prisma.queryLog.create({
-        data: {
-          tenantId,
-          userId: user.id,
-          question,
-          generatedSql: nlResult.sql,
-          explanation: nlResult.explanation,
-          rowCount: result.rowCount,
-          executionMs: elapsed,
-        },
-      });
+      // Log successful query (skip if no tenant)
+      if (tenant) {
+        await prisma.queryLog.create({
+          data: {
+            tenantId,
+            userId: user.id,
+            question,
+            generatedSql: nlResult.sql,
+            explanation: nlResult.explanation,
+            rowCount: result.rowCount,
+            executionMs: elapsed,
+          },
+        }).catch(() => {});
+      }
 
       return NextResponse.json({
         question,
@@ -121,16 +124,18 @@ export async function POST(req: NextRequest) {
         execution_time_ms: elapsed,
       });
     } catch (execErr: any) {
-      // Log execution error
-      await prisma.queryLog.create({
-        data: {
-          tenantId,
-          userId: user.id,
-          question,
-          generatedSql: nlResult.sql,
-          error: execErr.message,
-        },
-      });
+      // Log execution error (skip if no tenant)
+      if (tenant) {
+        await prisma.queryLog.create({
+          data: {
+            tenantId,
+            userId: user.id,
+            question,
+            generatedSql: nlResult.sql,
+            error: execErr.message,
+          },
+        }).catch(() => {});
+      }
 
       return NextResponse.json({
         question,

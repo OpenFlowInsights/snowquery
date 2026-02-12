@@ -52,15 +52,49 @@ function getConnection(tenantId: string, config: TenantConfig): Promise<snowflak
 }
 
 /**
+ * Get tenant config from database or environment variables
+ */
+async function getTenantConfig(tenantId: string): Promise<TenantConfig | null> {
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } }).catch(() => null);
+
+  if (tenant && tenant.isActive) {
+    return tenant as TenantConfig;
+  }
+
+  // Fallback to environment variables for public access
+  if (
+    process.env.SNOWFLAKE_ACCOUNT &&
+    process.env.SNOWFLAKE_USER &&
+    process.env.SNOWFLAKE_PASSWORD &&
+    process.env.SNOWFLAKE_WAREHOUSE &&
+    process.env.SNOWFLAKE_DATABASE &&
+    process.env.SNOWFLAKE_SCHEMA
+  ) {
+    return {
+      sfAccount: process.env.SNOWFLAKE_ACCOUNT,
+      sfUser: process.env.SNOWFLAKE_USER,
+      sfPassword: process.env.SNOWFLAKE_PASSWORD,
+      sfWarehouse: process.env.SNOWFLAKE_WAREHOUSE,
+      sfDatabase: process.env.SNOWFLAKE_DATABASE,
+      sfSchema: process.env.SNOWFLAKE_SCHEMA,
+      sfRole: process.env.SNOWFLAKE_ROLE || "PUBLIC",
+      maxRowsPerQuery: parseInt(process.env.MAX_ROWS_PER_QUERY || "1000"),
+      queryTimeoutSecs: parseInt(process.env.QUERY_TIMEOUT_SECS || "60"),
+    };
+  }
+
+  return null;
+}
+
+/**
  * Execute a SQL query against a tenant's Snowflake
  */
 export async function executeQuery(
   tenantId: string,
   sql: string
 ): Promise<{ columns: string[]; data: Record<string, any>[]; rowCount: number; truncated: boolean }> {
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
-  if (!tenant) throw new Error("Tenant not found");
-  if (!tenant.isActive) throw new Error("Tenant is inactive");
+  const config = await getTenantConfig(tenantId);
+  if (!config) throw new Error("Snowflake configuration not found");
 
   // Safety: only SELECT / WITH
   const normalized = sql.trim().toUpperCase();
@@ -79,11 +113,11 @@ export async function executeQuery(
     }
   }
 
-  const conn = await getConnection(tenantId, tenant as TenantConfig);
+  const conn = await getConnection(tenantId, config);
 
   return new Promise((resolve, reject) => {
     conn.execute({
-      sqlText: `ALTER SESSION SET STATEMENT_TIMEOUT_IN_SECONDS = ${tenant.queryTimeoutSecs}`,
+      sqlText: `ALTER SESSION SET STATEMENT_TIMEOUT_IN_SECONDS = ${config.queryTimeoutSecs}`,
       complete: () => {
         conn.execute({
           sqlText: sql,
@@ -91,8 +125,8 @@ export async function executeQuery(
             if (err) return reject(new Error(`Query error: ${err.message}`));
 
             const columns = stmt?.getColumns()?.map((c: any) => c.getName()) || [];
-            const data = (rows || []).slice(0, tenant.maxRowsPerQuery);
-            const truncated = (rows || []).length >= tenant.maxRowsPerQuery;
+            const data = (rows || []).slice(0, config.maxRowsPerQuery);
+            const truncated = (rows || []).length >= config.maxRowsPerQuery;
 
             // Serialize dates and other non-JSON types
             const serialized = data.map((row: any) => {
@@ -123,17 +157,18 @@ export async function executeQuery(
  * Introspect a tenant's Snowflake schema and cache it
  */
 export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
-  if (!tenant) throw new Error("Tenant not found");
+  const config = await getTenantConfig(tenantId);
+  if (!config) throw new Error("Snowflake configuration not found");
 
-  const conn = await getConnection(tenantId, tenant as TenantConfig);
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } }).catch(() => null);
+  const conn = await getConnection(tenantId, config);
 
   const tables: any[] = await new Promise((resolve, reject) => {
     conn.execute({
       sqlText: `
         SELECT TABLE_NAME, TABLE_TYPE, COMMENT
-        FROM ${tenant.sfDatabase}.INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_SCHEMA = '${tenant.sfSchema}'
+        FROM ${config.sfDatabase}.INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = '${config.sfSchema}'
         ORDER BY TABLE_NAME
       `,
       complete: (err, _, rows) => {
@@ -152,8 +187,8 @@ export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
       conn.execute({
         sqlText: `
           SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COMMENT
-          FROM ${tenant.sfDatabase}.INFORMATION_SCHEMA.COLUMNS
-          WHERE TABLE_SCHEMA = '${tenant.sfSchema}' AND TABLE_NAME = '${tableName}'
+          FROM ${config.sfDatabase}.INFORMATION_SCHEMA.COLUMNS
+          WHERE TABLE_SCHEMA = '${config.sfSchema}' AND TABLE_NAME = '${tableName}'
           ORDER BY ORDINAL_POSITION
         `,
         complete: (err, _, rows) => {
@@ -165,7 +200,7 @@ export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
 
     const rowCount: number = await new Promise((resolve, reject) => {
       conn.execute({
-        sqlText: `SELECT COUNT(*) AS CNT FROM ${tenant.sfDatabase}.${tenant.sfSchema}."${tableName}"`,
+        sqlText: `SELECT COUNT(*) AS CNT FROM ${config.sfDatabase}.${config.sfSchema}."${tableName}"`,
         complete: (err, _, rows) => {
           if (err) return resolve(0);
           resolve(rows?.[0]?.CNT || 0);
@@ -187,14 +222,16 @@ export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
     });
   }
 
-  // Cache in database
-  await prisma.tenant.update({
-    where: { id: tenantId },
-    data: {
-      schemaCache: JSON.stringify(tableMetadata),
-      schemaCachedAt: new Date(),
-    },
-  });
+  // Cache in database (skip if no tenant record)
+  if (tenant) {
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        schemaCache: JSON.stringify(tableMetadata),
+        schemaCachedAt: new Date(),
+      },
+    }).catch(() => {});
+  }
 
   return tableMetadata;
 }
@@ -203,8 +240,12 @@ export async function refreshSchemaCache(tenantId: string): Promise<any[]> {
  * Get cached schema or refresh if stale (>1 hour)
  */
 export async function getSchemaContext(tenantId: string): Promise<any[]> {
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
-  if (!tenant) throw new Error("Tenant not found");
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } }).catch(() => null);
+
+  // If no tenant record (public access), always refresh
+  if (!tenant) {
+    return await refreshSchemaCache(tenantId);
+  }
 
   const ONE_HOUR = 60 * 60 * 1000;
   const isStale =
